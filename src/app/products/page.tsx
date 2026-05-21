@@ -16,6 +16,9 @@ function ProductsCatalogContent() {
   const initialCat = searchParams.get('cat') || ''
   const initialSub = searchParams.get('sub') || ''
 
+  // Dynamic products state, falling back to MOCK_PRODUCTS initially
+  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS)
+
   // Filter States
   const [searchVal, setSearchVal] = useState(initialSearch)
   const [selectedCat, setSelectedCat] = useState(initialCat)
@@ -25,6 +28,24 @@ function ProductsCatalogContent() {
   const [maxPrice, setMaxPrice] = useState(200000000)
   const [sortBy, setSortBy] = useState('newest')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+
+  // Load dynamic products from API
+  useEffect(() => {
+    async function loadDynamicProducts() {
+      try {
+        const res = await fetch('/api/products')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.products && Array.isArray(data.products)) {
+            setProducts(data.products)
+          }
+        }
+      } catch (err) {
+        console.warn('API connection failed, falling back to static mock data:', err)
+      }
+    }
+    loadDynamicProducts()
+  }, [])
 
   // Sync state if search parameter updates via header
   useEffect(() => {
@@ -37,8 +58,8 @@ function ProductsCatalogContent() {
   }, [initialCat, initialSub])
 
   // Aggregate available brands and powers for filters dynamically
-  const brands = useMemo(() => Array.from(new Set(MOCK_PRODUCTS.map(p => p.brand))), [])
-  const powers = useMemo(() => Array.from(new Set(MOCK_PRODUCTS.map(p => p.power).filter(Boolean))) as string[], [])
+  const brands = useMemo(() => Array.from(new Set(products.map(p => p.brand))), [products])
+  const powers = useMemo(() => Array.from(new Set(products.map(p => p.power).filter(Boolean))) as string[], [products])
 
   const handleBrandChange = (brand: string) => {
     setSelectedBrands(prev =>
@@ -54,7 +75,7 @@ function ProductsCatalogContent() {
 
   // Core Filtering & Sorting Logic
   const filteredProducts = useMemo(() => {
-    let result = [...MOCK_PRODUCTS]
+    let result = [...products]
 
     // Search query filter
     if (searchVal) {
@@ -97,7 +118,7 @@ function ProductsCatalogContent() {
     }
 
     return result
-  }, [searchVal, selectedCat, selectedSub, selectedBrands, selectedPowers, maxPrice, sortBy, isB2b])
+  }, [searchVal, selectedCat, selectedSub, selectedBrands, selectedPowers, maxPrice, sortBy, isB2b, products])
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 font-sans">

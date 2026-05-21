@@ -14,6 +14,11 @@ enum DeliveryType {
   HEAVY
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 enum CustomerType {
   RETAIL
   WHOLESALE
@@ -29,6 +34,20 @@ enum InvoiceStatus {
 enum VehicleType {
   TRUCK_1_5T
   TRUCK_5T
+}
+
+// ========== USERS & ACCOUNTS ==========
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
 }
 
 // ========== MULTI-LOCATION INVENTORY ==========
@@ -53,6 +72,15 @@ model Product {
   name            String
   weight          Float            // Unit: kg
   deliveryType    DeliveryType     @default(LIGHT)
+  price           Float            @default(0)
+  agentPrice      Float            @default(0)
+  category        String           @default("other")
+  subCategory     String?
+  brand           String?
+  image           String?
+  description     String?          @db.Text
+  features        String?          @db.Text
+  specs           String?          @db.Text
   createdAt       DateTime         @default(now())
   inventoryLevels InventoryLevel[]
   comboItems      ComboItem[]

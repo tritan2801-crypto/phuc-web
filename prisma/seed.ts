@@ -1,4 +1,6 @@
 import { PrismaClient, DeliveryType, CustomerType, InvoiceStatus, VehicleType } from '@prisma/client'
+import { MOCK_PRODUCTS } from '../src/@core/constants/mock-data'
+import crypto from 'crypto'
 
 const prisma = new PrismaClient()
 
@@ -15,10 +17,33 @@ async function main() {
   await prisma.inventoryLevel.deleteMany()
   await prisma.product.deleteMany()
   await prisma.warehouse.deleteMany()
+  await prisma.user.deleteMany()
 
   console.log('🗑️  Cleared existing database records.')
 
-  // 2. SEED WAREHOUSES
+  // 2. SEED USERS
+  const adminPasswordHash = crypto.createHash('sha256').update('admin123').digest('hex')
+  const userPasswordHash = crypto.createHash('sha256').update('user123').digest('hex')
+
+  await prisma.user.createMany({
+    data: [
+      {
+        email: 'admin@khangphuc.com',
+        password: adminPasswordHash,
+        name: 'Khang Phúc Admin',
+        role: 'ADMIN',
+      },
+      {
+        email: 'user@khangphuc.com',
+        password: userPasswordHash,
+        name: 'Đại lý Khang Phúc B2B',
+        role: 'USER',
+      },
+    ],
+  })
+  console.log('👤 Seeded 2 users (admin@khangphuc.com / admin123, user@khangphuc.com / user123).')
+
+  // 3. SEED WAREHOUSES
   const hcmWarehouse = await prisma.warehouse.create({
     data: {
       id: 'KHO_HCM',
@@ -43,38 +68,45 @@ async function main() {
 
   console.log('🏢 Seeded 2 warehouses (HCM, Hanoi).')
 
-  // 3. SEED PRODUCTS
-  const productsData = [
-    // Heavy Equipment & Chemicals (Matching frontend IDs)
-    { id: 'may-mai-kvg-17e', sku: 'M-KARVA-KVG17E', name: 'Máy mài sàn bê tông Karva KVG-17E', weight: 48.0, deliveryType: DeliveryType.HEAVY },
-    { id: 'may-mai-kms-250', sku: 'M-KUMI-KMS250', name: 'Máy mài nền bê tông Kumisai KMS-250', weight: 90.0, deliveryType: DeliveryType.HEAVY },
-    { id: 'may-mai-asl-600', sku: 'M-ASL-600T8', name: 'Máy mài sàn công nghiệp ASL-600 T8', weight: 290.0, deliveryType: DeliveryType.HEAVY },
-    { id: 'may-mai-ronlon-800', sku: 'M-RON-RX800', name: 'Máy mài nền bê tông ngồi lái Ronlon RX-800', weight: 580.0, deliveryType: DeliveryType.HEAVY },
-    { id: 'may-hut-bui-kms-80', sku: 'M-KUMI-KMS80', name: 'Máy hút bụi công nghiệp Kumisai KMS-80', weight: 25.0, deliveryType: DeliveryType.HEAVY },
-    { id: 'may-cha-san-kms-50b', sku: 'M-KUMI-KMS50B', name: 'Máy chà sàn liên hợp đẩy tay Kumisai KMS-50B', weight: 110.0, deliveryType: DeliveryType.HEAVY },
-    { id: 'chat-tang-cung-lithium', sku: 'C-KP-LP01', name: 'Chất tăng cứng Lithium Densifier Khang Phúc LP-01', weight: 22.0, deliveryType: DeliveryType.HEAVY },
-    { id: 'son-epoxy-tu-san', sku: 'C-KP-EPSL', name: 'Sơn Epoxy tự san phẳng Khang Phúc EP-SL', weight: 20.0, deliveryType: DeliveryType.HEAVY },
-    
-    // Light Consumables & Accessories
-    { id: 'dia-mai-kim-cuong-30', sku: 'A-KP-DIA30', name: 'Đĩa mài kim cương bê tông #30 (Đầu sắt)', weight: 0.45, deliveryType: DeliveryType.LIGHT },
-    { id: 'resin-pad-50', sku: 'A-KP-RESIN50', name: 'Đĩa đánh bóng sàn bê tông Resin Pad #50', weight: 0.08, deliveryType: DeliveryType.LIGHT },
-    { id: 'bay-rang-cua-inox', sku: 'A-KP-TROWEL', name: 'Bay răng cưa thi công Epoxy (Thép không gỉ)', weight: 0.40, deliveryType: DeliveryType.LIGHT },
-    
-    // Additional accessories for cargo optimizer (Last-minute suggestions)
-    { id: 'tape-safety-yellow', sku: 'A-KP-TAPE', name: 'Băng keo dán cảnh báo phân làn nhà xưởng (50mm)', weight: 0.25, deliveryType: DeliveryType.LIGHT },
-    { id: 'gloves-protective', sku: 'A-KP-GLOVES', name: 'Găng tay len bảo hộ chống mài mòn', weight: 0.06, deliveryType: DeliveryType.LIGHT },
-    { id: 'roller-spike-epoxy', sku: 'A-KP-ROLLER', name: 'Con lăn rulo gai phá bọt khí sơn Epoxy', weight: 0.35, deliveryType: DeliveryType.LIGHT }
-  ]
-
+  // 4. SEED PRODUCTS FROM MOCK_PRODUCTS
   const seededProducts: { [key: string]: any } = {}
-  for (const item of productsData) {
-    const product = await prisma.product.create({ data: item })
+  for (const item of MOCK_PRODUCTS) {
+    // Parse weight from string like "48 kg"
+    let parsedWeight = 0.1
+    if (item.weight) {
+      const match = item.weight.match(/[\d.]+/)
+      if (match) {
+        parsedWeight = parseFloat(match[0])
+      }
+    }
+    // Determine delivery type
+    const isHeavy = item.category === 'may-moc' || item.id === 'chat-tang-cung-lithium' || item.id === 'son-epoxy-tu-san' || item.subCategory === 'son-pu'
+    const deliveryType = isHeavy ? DeliveryType.HEAVY : DeliveryType.LIGHT
+
+    const product = await prisma.product.create({
+      data: {
+        id: item.id,
+        sku: item.specs && item.specs['Mã sản phẩm'] ? item.specs['Mã sản phẩm'] : `SKU-${item.id.toUpperCase()}`,
+        name: item.name,
+        weight: parsedWeight,
+        deliveryType: deliveryType,
+        price: item.price,
+        agentPrice: item.agentPrice,
+        category: item.category,
+        subCategory: item.subCategory || null,
+        brand: item.brand,
+        image: item.image,
+        description: item.description,
+        features: JSON.stringify(item.features),
+        specs: JSON.stringify(item.specs),
+      },
+    })
     seededProducts[item.id] = product
   }
 
-  console.log(`📦 Seeded ${productsData.length} products.`)
+  console.log(`📦 Seeded ${MOCK_PRODUCTS.length} products dynamically.`)
 
-  // 4. SEED INVENTORY LEVELS
+  // 5. SEED INVENTORY LEVELS
   for (const product of Object.values(seededProducts)) {
     const isHeavy = product.deliveryType === DeliveryType.HEAVY
     
@@ -101,7 +133,7 @@ async function main() {
 
   console.log('📊 Seeded inventory stock levels for all warehouses.')
 
-  // 5. SEED HEAVY SHIPPING RULES
+  // 6. SEED HEAVY SHIPPING RULES
   await prisma.heavyShippingRule.createMany({
     data: [
       // HCM Warehouse Shipping Rules
@@ -147,7 +179,7 @@ async function main() {
 
   console.log('🚚 Seeded heavy shipping truck fare rules.')
 
-  // 6. SEED COMBOS (Matching frontend keys)
+  // 7. SEED COMBOS (Matching frontend keys)
   const grinderCombo = await prisma.combo.create({
     data: {
       id: 'combo-setup-xuong-mai',
@@ -188,7 +220,7 @@ async function main() {
 
   console.log('🎁 Seeded 2 Solution Combo packages.')
 
-  // 7. SEED B2B CUSTOMERS & WHOLESALE CREDIT
+  // 8. SEED B2B CUSTOMERS & WHOLESALE CREDIT
   const b2bCustomer = await prisma.customer.create({
     data: {
       id: 'cust_wholesale_01',
@@ -202,8 +234,8 @@ async function main() {
   await prisma.wholesaleProfile.create({
     data: {
       customerId: b2bCustomer.id,
-      creditLimit: 500000000.0, // 500 Million VND
-      outstandingBalance: 120000000.0, // 120 Million VND currently owed
+      creditLimit: 500000000.0,
+      outstandingBalance: 120000000.0,
       paymentTermsDays: 30,
       approvedAt: new Date(),
     },
@@ -216,7 +248,7 @@ async function main() {
       orderId: '10452',
       customerId: b2bCustomer.id,
       invoiceAmount: 120000000.0,
-      dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // Due in 15 days
+      dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
       status: InvoiceStatus.UNPAID,
       paidAmount: 0.0,
     },

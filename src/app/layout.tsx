@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter, Outfit } from 'next/font/google'
 import './globals.css'
 import { AppProvider } from '@core/context/AppContext'
+import { AuthProvider } from '@core/context/AuthContext'
 import Topbar from '@core/layout/Topbar'
 import Header from '@core/layout/Header'
 import SideCart from '@core/layout/SideCart'
@@ -34,7 +35,8 @@ export default function RootLayout({
   return (
     <html lang="vi" className={`${inter.variable} ${outfit.variable} h-full`}>
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-800 antialiased selection:bg-accent-500 selection:text-primary-900">
-        <AppProvider>
+        <AuthProvider>
+          <AppProvider>
           {/* Topbar: contacts, active branch, and B2B Agent toggle */}
           <Topbar />
           
@@ -54,7 +56,8 @@ export default function RootLayout({
           
           {/* Standard 5-column trust footer */}
           <Footer />
-        </AppProvider>
+          </AppProvider>
+        </AuthProvider>
       </body>
     </html>
   )
