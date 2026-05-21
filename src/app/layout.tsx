@@ -3,11 +3,7 @@ import { Inter, Outfit } from 'next/font/google'
 import './globals.css'
 import { AppProvider } from '@core/context/AppContext'
 import { AuthProvider } from '@core/context/AuthContext'
-import Topbar from '@core/layout/Topbar'
-import Header from '@core/layout/Header'
-import SideCart from '@core/layout/SideCart'
-import Footer from '@core/layout/Footer'
-import WholesaleSidebars from '@core/layout/WholesaleSidebars'
+import ShopLayoutWrapper from '@core/layout/ShopLayoutWrapper'
 
 const inter = Inter({
   variable: '--font-sans',
@@ -37,25 +33,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-800 antialiased selection:bg-accent-500 selection:text-primary-900">
         <AuthProvider>
           <AppProvider>
-          {/* Topbar: contacts, active branch, and B2B Agent toggle */}
-          <Topbar />
-          
-          {/* Core Brand Header: Search engine suggestions and Cart indicators */}
-          <Header />
-          
-          {/* Sticky Wholesale sidebars for desktop layout */}
-          <WholesaleSidebars />
-          
-          {/* Page contents injection */}
-          <div className="flex-1">
-            {children}
-          </div>
-          
-          {/* Global sliding interactive cart RFQ drawer */}
-          <SideCart />
-          
-          {/* Standard 5-column trust footer */}
-          <Footer />
+            <ShopLayoutWrapper>
+              {children}
+            </ShopLayoutWrapper>
           </AppProvider>
         </AuthProvider>
       </body>
