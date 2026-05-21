@@ -79,7 +79,12 @@ export async function GET() {
       })
     }
 
-    return NextResponse.json({ products: mergedProducts })
+    const productsWithSku = mergedProducts.map((p) => ({
+      ...p,
+      sku: (p as any).sku || `SKU-${p.id.toUpperCase().replace(/[^A-Z0-9]/g, '')}`
+    }))
+
+    return NextResponse.json({ products: productsWithSku })
   } catch (error) {
     return NextResponse.json({ error: 'Đã xảy ra lỗi hệ thống' }, { status: 500 })
   }

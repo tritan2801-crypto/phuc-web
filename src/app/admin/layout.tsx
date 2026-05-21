@@ -71,9 +71,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   ]
 
   return (
-    <div className="min-h-screen bg-slate-950 font-sans text-slate-100 flex">
+    <div className="h-screen bg-slate-950 font-sans text-slate-100 flex overflow-hidden">
       {/* SIDEBAR */}
-      <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between flex-shrink-0">
+      <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between flex-shrink-0 h-full">
         <div>
           {/* Logo Brand Brand */}
           <div className="p-6 border-b border-slate-800 flex items-center gap-3">
@@ -129,9 +129,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* MAIN CONTAINER */}
-      <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
+      <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
         {/* HEADER TOOLBAR */}
-        <header className="h-16 bg-slate-900 border-b border-slate-800 px-8 flex items-center justify-between">
+        <header className="h-16 bg-slate-900 border-b border-slate-800 px-8 flex items-center justify-between flex-shrink-0">
           <h1 className="font-heading font-black text-sm uppercase tracking-wider text-slate-200">
             {pathname === '/admin/dashboard'
               ? 'Hệ Thống Thống Kê'
@@ -155,7 +155,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* PAGE BODY */}
-        <main className="flex-1 p-8 bg-slate-950">
+        <main className="flex-1 p-5 sm:p-6 bg-slate-950 overflow-y-auto">
           {children}
         </main>
       </div>
