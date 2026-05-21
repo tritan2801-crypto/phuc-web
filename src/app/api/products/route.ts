@@ -25,7 +25,7 @@ export async function GET() {
       const dbProducts = await db.product.findMany()
       
       if (dbProducts.length > 0) {
-        dbProducts.forEach((dbProd) => {
+        dbProducts.forEach((dbProd: any) => {
           let parsedFeatures: string[] = []
           let parsedSpecs: Record<string, string> = {}
           
