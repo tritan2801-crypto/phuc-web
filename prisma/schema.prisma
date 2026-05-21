@@ -1,0 +1,157 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ========== GLOBAL ENUMS ==========
+
+enum DeliveryType {
+  LIGHT
+  HEAVY
+}
+
+enum CustomerType {
+  RETAIL
+  WHOLESALE
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+}
+
+enum VehicleType {
+  TRUCK_1_5T
+  TRUCK_5T
+}
+
+// ========== MULTI-LOCATION INVENTORY ==========
+
+model Warehouse {
+  id                 String              @id
+  name               String
+  code               String              @unique
+  address            String
+  city               String
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  inventoryLevels    InventoryLevel[]
+  heavyShippingRules HeavyShippingRule[]
+
+  @@map("warehouses")
+}
+
+model Product {
+  id              String           @id
+  sku             String           @unique
+  name            String
+  weight          Float            // Unit: kg
+  deliveryType    DeliveryType     @default(LIGHT)
+  createdAt       DateTime         @default(now())
+  inventoryLevels InventoryLevel[]
+  comboItems      ComboItem[]
+
+  @@map("products")
+}
+
+model InventoryLevel {
+  productId   String
+  warehouseId String
+  stockQty    Int      @default(0)
+  reservedQty Int      @default(0)
+  updatedAt   DateTime @updatedAt
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  @@id([productId, warehouseId])
+  @@map("inventory_levels")
+}
+
+// ========== COMBOS & BUNDLES ==========
+
+model Combo {
+  id                 String      @id
+  name               String
+  slug               String      @unique
+  discountPercentage Float       @default(0.0) // e.g. 15.00 for 15%
+  description        String?     @db.Text
+  isActive           Boolean     @default(true)
+  createdAt          DateTime    @default(now())
+  items              ComboItem[]
+
+  @@map("combos")
+}
+
+model ComboItem {
+  comboId    String
+  productId  String
+  quantity   Int     @default(1)
+  isOptional Boolean @default(false)
+  combo      Combo   @relation(fields: [comboId], references: [id], onDelete: Cascade)
+  product    Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@id([comboId, productId])
+  @@map("combo_items")
+}
+
+// ========== B2B CUSTOMERS & CREDIT SYSTEM ==========
+
+model Customer {
+  id               String            @id
+  email            String            @unique
+  companyName      String?
+  taxCode          String?
+  customerType     CustomerType      @default(RETAIL)
+  wholesaleProfile WholesaleProfile?
+  invoices         Invoice[]
+
+  @@map("customers")
+}
+
+model WholesaleProfile {
+  customerId         String    @id
+  creditLimit        Float     // Maximum credit limit in VND
+  outstandingBalance Float     @default(0.0) // Current unpaid balance
+  paymentTermsDays   Int       @default(30) // Net payment terms
+  approvedAt         DateTime?
+  approvedByUserId   Int?
+  customer           Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("wholesale_profiles")
+}
+
+model Invoice {
+  id            String        @id
+  orderId       String
+  customerId    String
+  invoiceAmount Float         // Total invoice including VAT & Shipping
+  dueDate       DateTime
+  status        InvoiceStatus @default(UNPAID)
+  paidAmount    Float         @default(0.0)
+  createdAt     DateTime      @default(now())
+  customer      Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  @@map("invoices")
+}
+
+// ========== HEAVY GOODS LOGISTICS ==========
+
+model HeavyShippingRule {
+  id            String      @id
+  warehouseId   String
+  vehicleType   VehicleType
+  maxWeightKg   Float
+  baseFare      Float       // Pricing for first 5km
+  perKmRate     Float       // Pricing per extra km
+  minDistanceKm Float       @default(0.0)
+  createdAt     DateTime    @default(now())
+  warehouse     Warehouse   @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  @@map("heavy_shipping_rules")
+}

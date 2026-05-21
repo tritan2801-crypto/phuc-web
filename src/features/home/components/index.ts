@@ -1,0 +1,10 @@
+export { default as HeroSection } from './HeroSection'
+export { default as QuickCategories } from './QuickCategories'
+export { default as ComboDeals } from './ComboDeals'
+export { default as CategoryProductBlock } from './CategoryProductBlock'
+export { default as IndustrySolutions } from './IndustrySolutions'
+export { default as VideoCaseStudies } from './VideoCaseStudies'
+export { default as HomeNews } from './HomeNews'
+export { default as CustomerReviews } from './CustomerReviews'
+export { default as NewArrivalsSlider } from './NewArrivalsSlider'
+
