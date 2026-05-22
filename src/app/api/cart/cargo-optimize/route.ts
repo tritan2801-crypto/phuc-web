@@ -1,7 +1,8 @@
 import { db } from '@core/database/prisma.client'
 import { NextResponse } from 'next/server'
-import { DeliveryType } from '@prisma/client'
+import { DeliveryType } from '@core/database/enums'
 import { MOCK_PRODUCTS } from '@core/constants/mock-data'
+
 
 export async function POST(request: Request) {
   try {

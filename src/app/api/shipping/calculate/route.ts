@@ -1,7 +1,8 @@
 import { db } from '@core/database/prisma.client'
 import { NextResponse } from 'next/server'
-import { DeliveryType, VehicleType } from '@prisma/client'
+import { DeliveryType, VehicleType } from '@core/database/enums'
 import { MOCK_PRODUCTS } from '@core/constants/mock-data'
+
 
 // Helper to determine closest warehouse and distance based on Vietnamese address keywords
 function geocodeAddress(address: string) {

@@ -4,6 +4,7 @@ import './globals.css'
 import { AppProvider } from '@core/context/AppContext'
 import { AuthProvider } from '@core/context/AuthContext'
 import ShopLayoutWrapper from '@core/layout/ShopLayoutWrapper'
+import { Analytics } from "@vercel/analytics/next"
 
 const inter = Inter({
   variable: '--font-sans',
@@ -38,6 +39,7 @@ export default function RootLayout({
             </ShopLayoutWrapper>
           </AppProvider>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   )

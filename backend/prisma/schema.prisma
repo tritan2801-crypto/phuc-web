@@ -1,0 +1,186 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ========== GLOBAL ENUMS (MAPPED TO TS ENUMS FOR SQLITE) ==========
+
+
+// ========== USERS & ACCOUNTS ==========
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("USER")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+  @@map("users")
+}
+
+// ========== MULTI-LOCATION INVENTORY ==========
+
+model Warehouse {
+  id                 String              @id
+  name               String
+  code               String              @unique
+  address            String
+  city               String
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  inventoryLevels    InventoryLevel[]
+  heavyShippingRules HeavyShippingRule[]
+
+  @@map("warehouses")
+}
+
+model Product {
+  id              String           @id
+  sku             String           @unique
+  name            String
+  weight          Float            // Unit: kg
+  deliveryType    String           @default("LIGHT")
+  price           Float            @default(0)
+  agentPrice      Float            @default(0)
+  category        String           @default("other")
+  subCategory     String?
+  brand           String?
+  image           String?
+  description     String?
+  features        String?
+  specs           String?
+  createdAt       DateTime         @default(now())
+  inventoryLevels InventoryLevel[]
+  comboItems      ComboItem[]
+
+  @@index([category])
+  @@index([subCategory])
+  @@map("products")
+}
+
+model InventoryLevel {
+  productId   String
+  warehouseId String
+  stockQty    Int      @default(0)
+  reservedQty Int      @default(0)
+  updatedAt   DateTime @updatedAt
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  @@id([productId, warehouseId])
+  @@map("inventory_levels")
+}
+
+// ========== COMBOS & BUNDLES ==========
+
+model Combo {
+  id                 String      @id
+  name               String
+  slug               String      @unique
+  discountPercentage Float       @default(0.0) // e.g. 15.00 for 15%
+  description        String?
+  isActive           Boolean     @default(true)
+  createdAt          DateTime    @default(now())
+  items              ComboItem[]
+
+  @@map("combos")
+}
+
+model ComboItem {
+  comboId    String
+  productId  String
+  quantity   Int     @default(1)
+  isOptional Boolean @default(false)
+  combo      Combo   @relation(fields: [comboId], references: [id], onDelete: Cascade)
+  product    Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@id([comboId, productId])
+  @@map("combo_items")
+}
+
+// ========== B2B CUSTOMERS & CREDIT SYSTEM ==========
+
+model Customer {
+  id               String            @id
+  email            String            @unique
+  companyName      String?
+  taxCode          String?
+  customerType     String            @default("RETAIL")
+  wholesaleProfile WholesaleProfile?
+  invoices         Invoice[]
+
+  @@map("customers")
+}
+
+model WholesaleProfile {
+  customerId         String    @id
+  creditLimit        Float     // Maximum credit limit in VND
+  outstandingBalance Float     @default(0.0) // Current unpaid balance
+  paymentTermsDays   Int       @default(30) // Net payment terms
+  approvedAt         DateTime?
+  approvedByUserId   Int?
+  customer           Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("wholesale_profiles")
+}
+
+model Invoice {
+  id            String        @id
+  orderId       String
+  customerId    String
+  invoiceAmount Float         // Total invoice including VAT & Shipping
+  dueDate       DateTime
+  status        String        @default("UNPAID")
+  paidAmount    Float         @default(0.0)
+  createdAt     DateTime      @default(now())
+  customer      Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  @@index([status])
+  @@index([customerId])
+  @@map("invoices")
+}
+
+// ========== HEAVY GOODS LOGISTICS ==========
+
+model HeavyShippingRule {
+  id            String      @id
+  warehouseId   String
+  vehicleType   String
+  maxWeightKg   Float
+  baseFare      Float       // Pricing for first 5km
+  perKmRate     Float       // Pricing per extra km
+  minDistanceKm Float       @default(0.0)
+  createdAt     DateTime    @default(now())
+  warehouse     Warehouse   @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  @@index([warehouseId])
+  @@map("heavy_shipping_rules")
+}
+
+// ========== USER BEHAVIOR TRACKING & ANALYTICS ==========
+
+model UserBehavior {
+  id          String   @id @default(uuid())
+  userId      String?  // Optional: associated user ID if logged in
+  ip          String?
+  userAgent   String?
+  eventType   String   // e.g. "SECTION_VIEW", "CLICK", "SCROLL"
+  page        String   // e.g. "/", "/products"
+  section     String?  // e.g. "HeroSection", "ComboDeals"
+  elementId   String?  // e.g. button ID or selector
+  timeSpent   Int?     // Time spent in milliseconds
+  metadata    String?  // JSON string for additional payload data
+  createdAt   DateTime @default(now())
+
+  @@index([eventType])
+  @@index([userId])
+  @@map("user_behaviors")
+}
+

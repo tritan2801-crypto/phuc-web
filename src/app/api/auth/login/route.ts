@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       })
 
       if (user && comparePassword(password, user.password)) {
-        authenticatedUser = { email: user.email, name: user.name, role: user.role }
+        authenticatedUser = { email: user.email, name: user.name, role: user.role as 'USER' | 'ADMIN' }
       }
     } catch (dbError) {
       console.warn('Prisma database offline during login, falling back to mock authentication:', dbError)
