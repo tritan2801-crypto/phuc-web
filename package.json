@@ -11,6 +11,7 @@
     "dev:backend": "npm run start:dev --workspace=backend",
     "build:frontend": "npm run build --workspace=frontend",
     "build:backend": "npm run build --workspace=backend",
-    "build": "npm run build:backend && npm run build:frontend"
+    "build": "npm run build:backend && npm run build:frontend",
+    "start": "npx prisma migrate deploy --schema=backend/prisma/schema.prisma && npm run start:prod --workspace=backend"
   }
 }
