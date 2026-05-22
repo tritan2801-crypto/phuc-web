@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { X, Trash2, FileText, Send, CheckCircle2, Truck, Plus, AlertTriangle, FileSpreadsheet } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
+
 const PRODUCT_WEIGHTS: Record<string, number> = {
   'may-mai-kvg-17e': 48.0,
   'may-mai-kms-250': 90.0,
@@ -91,7 +93,7 @@ export default function SideCart() {
 
     const fetchOptimizerSuggestions = async () => {
       try {
-        const res = await fetch('/api/cart/cargo-optimize', {
+        const res = await fetch(`${API_BASE_URL}/api/cart/cargo-optimize`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -117,7 +119,7 @@ export default function SideCart() {
     if (!form.address || cart.length === 0) return
     setIsCalculatingShip(true)
     try {
-      const res = await fetch('/api/shipping/calculate', {
+      const res = await fetch(`${API_BASE_URL}/api/shipping/calculate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -166,7 +168,7 @@ export default function SideCart() {
 
     setIsSubmitting(true)
     try {
-      const res = await fetch('/api/quotes/project-request', {
+      const res = await fetch(`${API_BASE_URL}/api/quotes/project-request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 import posthog from 'posthog-js'
 
 export interface UserProfile {
@@ -25,7 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function checkSession() {
       try {
-        const res = await fetch('/api/auth/me')
+        const res = await fetch(`${API_BASE_URL}/api/auth/me`)
         if (res.ok) {
           const data = await res.json()
           if (data.user) {
@@ -48,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -82,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       posthog.capture('frontend_user_logged_out')
       posthog.reset()
-      await fetch('/api/auth/logout', { method: 'POST' })
+      await fetch(`${API_BASE_URL}/api/auth/logout`, { method: 'POST' })
     } catch (err) {
       console.error('Logout error:', err)
     } finally {

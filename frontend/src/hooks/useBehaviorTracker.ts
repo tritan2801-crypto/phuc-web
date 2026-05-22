@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
 export function useBehaviorTracker() {
   const { user } = useAuth();
   const activeSectionRef = useRef<string | null>(null);
@@ -22,7 +24,7 @@ export function useBehaviorTracker() {
         userId: user?.email || null, // Associate user session if logged in
       };
       
-      await fetch('/api/analytics/track', {
+      await fetch(`${API_BASE_URL}/api/analytics/track`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

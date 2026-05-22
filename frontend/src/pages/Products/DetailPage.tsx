@@ -6,6 +6,8 @@ import { useApp } from '../../context/AppContext'
 import { MOCK_PRODUCTS, Product } from '../../constants/mock-data'
 import posthog from 'posthog-js'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
+
 export default function ProductDetailPage() {
   const { id } = useParams()
   const { addToCart, setIsCartOpen, isB2b } = useApp()
@@ -118,7 +120,7 @@ export default function ProductDetailPage() {
 
     setRfqSubmitting(true)
     try {
-      const res = await fetch('/api/quotes/project-request', {
+      const res = await fetch(`${API_BASE_URL}/api/quotes/project-request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

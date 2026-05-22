@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { Package, Search, Plus, Edit2, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react'
 import posthog from 'posthog-js'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
+
 interface Product {
   id: string
   sku: string
@@ -53,7 +55,7 @@ export default function AdminProducts() {
   const fetchProducts = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/products')
+      const res = await fetch(`${API_BASE_URL}/api/products`)
       if (res.ok) {
         const data = await res.json()
         setProducts(data.products || [])
@@ -169,7 +171,7 @@ export default function AdminProducts() {
     }
 
     try {
-      const url = modalMode === 'create' ? '/api/products' : `/api/products/${currentProductId}`
+      const url = modalMode === 'create' ? `${API_BASE_URL}/api/products` : `${API_BASE_URL}/api/products/${currentProductId}`
       const method = modalMode === 'create' ? 'POST' : 'PUT'
 
       const res = await fetch(url, {
@@ -221,7 +223,7 @@ export default function AdminProducts() {
     }
 
     try {
-      const res = await fetch(`/api/products/${id}`, { method: 'DELETE' })
+      const res = await fetch(`${API_BASE_URL}/api/products/${id}`, { method: 'DELETE' })
       if (res.ok) {
         posthog.capture('admin_product_modified', {
           action: 'delete',

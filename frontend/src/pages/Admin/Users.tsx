@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { Users as UsersIcon, UserPlus, Mail, Loader2, AlertTriangle } from 'lucide-react'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
+
 interface User {
   id: string
   email: string
@@ -25,7 +27,7 @@ export default function AdminUsers() {
   const fetchUsers = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/admin/users')
+      const res = await fetch(`${API_BASE_URL}/api/admin/users`)
       if (res.ok) {
         const data = await res.json()
         setUsers(data.users || [])
@@ -48,7 +50,7 @@ export default function AdminUsers() {
     }
 
     try {
-      const res = await fetch('/api/admin/users', {
+      const res = await fetch(`${API_BASE_URL}/api/admin/users`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, role: nextRole })
@@ -71,7 +73,7 @@ export default function AdminUsers() {
     setFormLoading(true)
 
     try {
-      const res = await fetch('/api/auth/register', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formFields)

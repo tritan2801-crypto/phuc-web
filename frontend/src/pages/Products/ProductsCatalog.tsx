@@ -5,6 +5,8 @@ import PexelsImage from '../../components/ui/PexelsImage'
 import { useApp } from '../../context/AppContext'
 import { MOCK_PRODUCTS, Product } from '../../constants/mock-data'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
+
 export default function ProductsCatalog() {
   const { addToCart, setIsCartOpen, isB2b } = useApp()
   const [searchParams] = useSearchParams()
@@ -31,7 +33,7 @@ export default function ProductsCatalog() {
   useEffect(() => {
     async function loadDynamicProducts() {
       try {
-        const res = await fetch('/api/products')
+        const res = await fetch(`${API_BASE_URL}/api/products`)
         if (res.ok) {
           const data = await res.json()
           if (data.products && Array.isArray(data.products)) {

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { ShieldCheck, Mail, Lock, ArrowRight, AlertTriangle, Loader2, User } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
+
 export default function AdminLoginPage() {
   const { user, login, loading } = useAuth()
   const navigate = useNavigate()
@@ -57,7 +59,7 @@ export default function AdminLoginPage() {
     setFormLoading(true)
 
     try {
-      const regRes = await fetch('/api/auth/register', {
+      const regRes = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

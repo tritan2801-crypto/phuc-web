@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { Package, Users, Warehouse, Milestone, RefreshCw, Layers } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
+
 export default function AdminDashboard() {
   const { user } = useAuth()
   const [stats, setStats] = useState({
@@ -20,12 +22,12 @@ export default function AdminDashboard() {
     setStats(prev => ({ ...prev, loading: true }))
     try {
       // 1. Fetch Products
-      const prodRes = await fetch('/api/products')
+      const prodRes = await fetch(`${API_BASE_URL}/api/products`)
       const prodData = await prodRes.json()
       const productsList = prodData.products || []
 
       // 2. Fetch Users
-      const userRes = await fetch('/api/admin/users')
+      const userRes = await fetch(`${API_BASE_URL}/api/admin/users`)
       const userData = await userRes.json()
       const usersList = userData.users || []
 

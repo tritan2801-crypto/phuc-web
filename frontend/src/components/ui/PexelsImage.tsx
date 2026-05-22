@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
+
 interface Props {
   query: string
   orientation?: 'landscape' | 'portrait' | 'square'
@@ -49,7 +51,7 @@ export function PexelsImage({ query, className = '', index = 0 }: Props) {
 
     // Otherwise, attempt dynamic fetch through API route
     setLoading(true)
-    fetch(`/api/images?q=${encodeURIComponent(query)}&per_page=${index + 1}`)
+    fetch(`${API_BASE_URL}/api/images?q=${encodeURIComponent(query)}&per_page=${index + 1}`)
       .then((res) => {
         if (!res.ok) throw new Error()
         return res.json()
