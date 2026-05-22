@@ -11,6 +11,7 @@ import { CartModule } from './modules/cart/cart.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { ImagesModule } from './modules/images/images.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { PostHogModule } from './modules/posthog/posthog.module';
 
 // Resolve static path dynamically based on whether code is compiled (dist) or source (src)
 const isProd = __dirname.includes('dist');
@@ -34,6 +35,7 @@ const frontendDistPath = isProd
     AdminModule,
     ImagesModule,
     AnalyticsModule,
+    PostHogModule,
   ],
 })
 export class AppModule {}

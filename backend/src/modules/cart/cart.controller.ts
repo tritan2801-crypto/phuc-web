@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Headers } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { CargoOptimizeDto } from './dto/cargo-optimize.dto';
 
@@ -8,7 +8,11 @@ export class CartController {
 
   @Post('cargo-optimize')
   @HttpCode(HttpStatus.OK)
-  optimize(@Body() cargoOptimizeDto: CargoOptimizeDto) {
-    return this.cartService.optimize(cargoOptimizeDto);
+  optimize(
+    @Body() cargoOptimizeDto: CargoOptimizeDto,
+    @Headers('x-posthog-distinct-id') distinctId?: string,
+    @Headers('x-posthog-session-id') sessionId?: string,
+  ) {
+    return this.cartService.optimize(cargoOptimizeDto, { distinctId, sessionId });
   }
 }

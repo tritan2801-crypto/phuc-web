@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import posthog from 'posthog-js'
 
 export interface UserProfile {
   email: string
@@ -29,6 +30,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const data = await res.json()
           if (data.user) {
             setUser(data.user)
+            posthog.identify(data.user.email, {
+              email: data.user.email,
+              name: data.user.name,
+              role: data.user.role,
+            })
           }
         }
       } catch (err) {
@@ -51,6 +57,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (res.ok) {
         const data = await res.json()
         setUser(data.user)
+        
+        posthog.identify(data.user.email, {
+          email: data.user.email,
+          name: data.user.name,
+          role: data.user.role,
+        })
+        posthog.capture('frontend_user_logged_in', {
+          email: data.user.email,
+          role: data.user.role,
+        })
+        
         return { success: true }
       } else {
         const errData = await res.json()
@@ -63,6 +80,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
+      posthog.capture('frontend_user_logged_out')
+      posthog.reset()
       await fetch('/api/auth/logout', { method: 'POST' })
     } catch (err) {
       console.error('Logout error:', err)

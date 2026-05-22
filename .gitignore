@@ -29,6 +29,9 @@ dist/
 *.db-journal
 backend/prisma/dev.db
 backend/prisma/dev.db-journal
+backend/prisma/dev.db-shm
+backend/prisma/dev.db-wal
+
 
 # misc
 .DS_Store

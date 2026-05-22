@@ -13,8 +13,10 @@ export class AuthController {
   async login(
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) response: Response,
+    @Headers('x-posthog-distinct-id') distinctId?: string,
+    @Headers('x-posthog-session-id') sessionId?: string,
   ) {
-    const result = await this.authService.login(loginDto);
+    const result = await this.authService.login(loginDto, { distinctId, sessionId });
     
     // Set cookie
     response.cookie('session_token', result.sessionToken, {
@@ -32,8 +34,12 @@ export class AuthController {
   }
 
   @Post('register')
-  register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+  register(
+    @Body() registerDto: RegisterDto,
+    @Headers('x-posthog-distinct-id') distinctId?: string,
+    @Headers('x-posthog-session-id') sessionId?: string,
+  ) {
+    return this.authService.register(registerDto, { distinctId, sessionId });
   }
 
   @Post('logout')

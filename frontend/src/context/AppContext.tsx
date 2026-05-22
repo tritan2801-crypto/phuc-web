@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import posthog from 'posthog-js'
 
 export interface CartItem {
   id: string
@@ -63,11 +64,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setIsB2b(prev => {
       const next = !prev
       localStorage.setItem('khangphuc_isB2b', String(next))
+      posthog.capture('b2b_mode_toggled', { enabled: next })
       return next
     })
   }
 
   const addToCart = (product: Omit<CartItem, 'quantity'>, quantity = 1) => {
+    posthog.capture('cart_item_added', {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      agentPrice: product.agentPrice,
+      quantity,
+    })
     setCart(prev => {
       const existing = prev.find(i => i.id === product.id)
       let updated
@@ -82,6 +91,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const removeFromCart = (id: string) => {
+    posthog.capture('cart_item_removed', { id })
     setCart(prev => {
       const updated = prev.filter(i => i.id !== id)
       localStorage.setItem('khangphuc_cart', JSON.stringify(updated))

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Package, Search, Plus, Edit2, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react'
+import posthog from 'posthog-js'
 
 interface Product {
   id: string
@@ -180,6 +181,29 @@ export default function AdminProducts() {
       if (res.ok) {
         setIsModalOpen(false)
         fetchProducts() // reload table
+        try {
+          const data = await res.json()
+          const prod = data.product
+          posthog.capture('admin_product_modified', {
+            action: modalMode === 'create' ? 'create' : 'update',
+            productId: prod?.id || currentProductId || undefined,
+            sku: prod?.sku || payload.sku,
+            name: prod?.name || payload.name,
+            category: prod?.category || payload.category,
+            price: prod?.price || payload.price,
+            agentPrice: prod?.agentPrice || payload.agentPrice
+          })
+        } catch (err) {
+          posthog.capture('admin_product_modified', {
+            action: modalMode === 'create' ? 'create' : 'update',
+            productId: currentProductId || undefined,
+            sku: payload.sku,
+            name: payload.name,
+            category: payload.category,
+            price: payload.price,
+            agentPrice: payload.agentPrice
+          })
+        }
       } else {
         const data = await res.json()
         setFormError(data.error || 'Đã xảy ra lỗi khi lưu sản phẩm')
@@ -199,6 +223,11 @@ export default function AdminProducts() {
     try {
       const res = await fetch(`/api/products/${id}`, { method: 'DELETE' })
       if (res.ok) {
+        posthog.capture('admin_product_modified', {
+          action: 'delete',
+          productId: id,
+          name: name
+        })
         fetchProducts() // reload table
       } else {
         alert('Xóa sản phẩm thất bại')

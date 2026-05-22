@@ -3,12 +3,16 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CargoOptimizeDto } from './dto/cargo-optimize.dto';
 import { DeliveryType } from '../../enums/database.enums';
 import { MOCK_PRODUCTS } from '../../constants/mock-data';
+import { PostHogService } from '../posthog/posthog.service';
 
 @Injectable()
 export class CartService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private posthog: PostHogService,
+  ) { }
 
-  async optimize(dto: CargoOptimizeDto) {
+  async optimize(dto: CargoOptimizeDto, posthogCtx?: { distinctId?: string; sessionId?: string }) {
     const { cartItems, chosenTruckType } = dto;
 
     if (!cartItems || !Array.isArray(cartItems)) {
@@ -47,7 +51,8 @@ export class CartService {
       });
     } catch (dbError) {
       console.warn('Prisma database offline, falling back to mock products logic:', dbError);
-      
+      this.posthog.captureException(dbError, posthogCtx?.distinctId || 'anonymous_user', { context: 'cart_db_error' });
+
       const fallbackProducts = MOCK_PRODUCTS.map((p) => ({
         id: p.id,
         sku: p.specs['Mã sản phẩm'] || `SKU-${p.id.toUpperCase()}`,
@@ -76,27 +81,44 @@ export class CartService {
 
     // Case 1: Overloaded
     if (remainingCapacity < 0) {
+      let result;
       if (chosenTruckType === 'TRUCK_1_5T') {
-        return {
+        result = {
           status: 'OVERLOADED',
           currentWeight,
           maxCapacity,
           remainingCapacity,
           message: `Khối lượng hàng (${currentWeight.toFixed(1)}kg) đã vượt quá tải trọng xe 1.5 Tấn (${maxCapacity}kg). Đề xuất đổi lên xe tải 5 Tấn để vận chuyển an toàn.`,
           suggestUpgrade: true,
-          suggestions: [],
+          suggestions: [] as any[],
         };
       } else {
-        return {
+        result = {
           status: 'OVERLOADED',
           currentWeight,
           maxCapacity,
           remainingCapacity,
           message: `Khối lượng hàng (${currentWeight.toFixed(1)}kg) đã vượt quá tải trọng tối đa của xe 5 Tấn (${maxCapacity}kg). Vui lòng tách đơn hàng hoặc liên hệ Sale để thuê xe chuyên dụng.`,
           suggestUpgrade: false,
-          suggestions: [],
+          suggestions: [] as any[],
         };
       }
+
+      this.posthog.capture({
+        distinctId: posthogCtx?.distinctId || 'anonymous_user',
+        event: 'cargo_optimized',
+        properties: {
+          status: result.status,
+          chosenTruckType,
+          currentWeight,
+          maxCapacity,
+          remainingCapacity,
+          suggestUpgrade: result.suggestUpgrade,
+          $session_id: posthogCtx?.sessionId,
+        },
+      });
+
+      return result;
     }
 
     // Case 2: Within capacity limits -> Suggest light accessories to optimize capacity
@@ -129,12 +151,28 @@ export class CartService {
       }
     }
 
-    return {
+    const result = {
       status: 'OPTIMIZED',
       currentWeight,
       maxCapacity,
       remainingCapacity,
       suggestions,
     };
+
+    this.posthog.capture({
+      distinctId: posthogCtx?.distinctId || 'anonymous_user',
+      event: 'cargo_optimized',
+      properties: {
+        status: result.status,
+        chosenTruckType,
+        currentWeight,
+        maxCapacity,
+        remainingCapacity,
+        suggestionCount: suggestions.length,
+        $session_id: posthogCtx?.sessionId,
+      },
+    });
+
+    return result;
   }
 }

@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ShoppingCart, Phone, Building, Award, CheckCircle2, ChevronRight, Settings2, FileSpreadsheet, RotateCcw, Download, Play } from 'lucide-react'
 import PexelsImage from '../../components/ui/PexelsImage'
 import { useApp } from '../../context/AppContext'
 import { MOCK_PRODUCTS, Product } from '../../constants/mock-data'
+import posthog from 'posthog-js'
 
 export default function ProductDetailPage() {
   const { id } = useParams()
@@ -31,6 +32,21 @@ export default function ProductDetailPage() {
   const product = useMemo(() => {
     return MOCK_PRODUCTS.find(p => p.id === id) || MOCK_PRODUCTS[0]
   }, [id])
+
+  // Track product viewed event in PostHog
+  useEffect(() => {
+    if (product) {
+      posthog.capture('product_viewed', {
+        id: product.id,
+        name: product.name,
+        brand: product.brand,
+        category: product.category,
+        subCategory: product.subCategory,
+        price: product.price,
+        agentPrice: product.agentPrice,
+      })
+    }
+  }, [product])
 
   const priceToShow = isB2b ? product.agentPrice : product.price
   const savings = product.price - product.agentPrice
@@ -120,6 +136,17 @@ export default function ProductDetailPage() {
 
       const data = await res.json()
       if (data.success) {
+        posthog.capture('rfq_form_submitted', {
+          quoteId: data.quoteId,
+          fullName: rfqForm.fullName,
+          email: rfqForm.email,
+          companyName: rfqForm.companyName,
+          projectArea: rfqForm.projectArea,
+          flooringType: rfqForm.flooringType,
+          productId: product.id,
+          productName: product.name,
+          isB2b,
+        })
         setRfqResult({
           quoteId: data.quoteId,
           pdfUrl: data.pdfUrl,
@@ -131,6 +158,7 @@ export default function ProductDetailPage() {
       }
     } catch (err) {
       console.error(err)
+      posthog.captureException(err, { context: 'rfq_submit_error' })
       alert('Lỗi kết nối máy chủ.')
     } finally {
       setRfqSubmitting(false)

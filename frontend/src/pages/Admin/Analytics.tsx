@@ -47,7 +47,6 @@ export default function AdminAnalytics() {
 
       const res = await fetch(`/api/analytics/logs?${params.toString()}`);
       if (res.status === 403) {
-        alert('Bạn không có quyền truy cập thông tin phân tích.');
         return;
       }
       const data = await res.json();
@@ -68,6 +67,10 @@ export default function AdminAnalytics() {
   }, [pageIndex, eventTypeFilter, pageFilter, sectionFilter]);
 
   const handleExport = () => {
+    if (total === 0) {
+      alert('Không có thông tin');
+      return;
+    }
     // Download directly using window.location
     window.location.href = '/api/analytics/export';
   };

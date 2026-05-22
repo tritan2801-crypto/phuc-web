@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { CreateQuoteDto } from './dto/create-quote.dto';
 import { MOCK_PRODUCTS } from '../../constants/mock-data';
 import { firstValueFrom } from 'rxjs';
+import { PostHogService } from '../posthog/posthog.service';
 
 @Injectable()
 export class QuotesService {
@@ -12,6 +13,7 @@ export class QuotesService {
     private prisma: PrismaService,
     private readonly httpService: HttpService,
     private configService: ConfigService,
+    private posthog: PostHogService,
   ) {}
 
   private calculateMaterialCoverage(areaM2: number, flooringType: string) {
@@ -48,7 +50,7 @@ export class QuotesService {
     return suggestions;
   }
 
-  async createQuote(dto: CreateQuoteDto) {
+  async createQuote(dto: CreateQuoteDto, posthogCtx?: { distinctId?: string; sessionId?: string }) {
     const {
       fullName,
       phone,
@@ -75,6 +77,7 @@ export class QuotesService {
       });
     } catch (dbError) {
       console.warn('Prisma database offline, using fallback mock products:', dbError);
+      this.posthog.captureException(dbError, posthogCtx?.distinctId || email, { context: 'quotes_db_error' });
       const fallbackProducts = MOCK_PRODUCTS.map((p) => ({
         id: p.id,
         sku: p.specs['Mã sản phẩm'] || `SKU-${p.id.toUpperCase()}`,
@@ -172,6 +175,24 @@ export class QuotesService {
         console.error('Failed to post to Zalo Webhook:', err);
       }
     }
+
+    const phDistinctId = posthogCtx?.distinctId || email;
+    this.posthog.capture({
+      distinctId: phDistinctId,
+      event: 'quote_created',
+      properties: {
+        quoteId,
+        fullName,
+        email,
+        companyName,
+        isB2b,
+        projectArea: area,
+        flooringType: resolvedType,
+        subtotal,
+        itemCount: detailedItems.reduce((acc: number, item: any) => acc + item.quantity, 0),
+        $session_id: posthogCtx?.sessionId,
+      },
+    });
 
     return {
       success: true,

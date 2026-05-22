@@ -16,7 +16,10 @@ export class AdminService {
     if (!cookieHeader) return false;
     try {
       const cookies = cookieHeader.split(';').reduce((acc, c) => {
-        const [key, val] = c.trim().split('=');
+        const idx = c.indexOf('=');
+        if (idx === -1) return acc;
+        const key = c.substring(0, idx).trim();
+        const val = c.substring(idx + 1).trim();
         acc[key] = val;
         return acc;
       }, {} as Record<string, string>);
